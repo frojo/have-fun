@@ -1,0 +1,341 @@
+<!doctype html>
+
+<html>
+
+<head>
+
+<title>I MADE A FUN GAME</title>
+
+
+<link rel="stylesheet" type="text/css" href="./main.css" />
+
+
+</head>
+
+<body>
+  <div id="game">
+    <div id="walkthrough-title">lets merc some bad guys</div>
+    <div id="room"></div>
+    <div id="living-room"></div>
+    <div id="house1"></div>
+    <div id="town"></div>
+
+
+
+    <div id="elms-house"></div>
+    <div id="elms-lab"></div>
+
+
+    <div style="top: 250px; left: 100px;">this is where you start after you boot up the game</div>
+    <div style="top: 270px; left: 110px;">and prof oak does his speech</div>
+    <div style="top: 400px; left: 120px;">there's not much to do here</div>
+    <div style="top: 430px; left: 120px;">just take the stairs</div>
+
+
+    <div style="top: 830px; left: 420px;">when you come down the stairs,</div>
+    <div style="top: 850px; left: 420px;">your mom walks up to you and talks to you a bunch</div>
+    <div style="top: 900px; left: 600px;">you can mostly mash A through all the dialogue</div>
+    <div style="top: 980px; left: 600px;">oh! I forgot to explain controls!</div>
+    <div style="top: 1000px; left: 600px;">D-Pad to walk around</div>
+    <div style="top: 1020px; left: 600px;">A to interact/talk/confirm</div>
+    <div style="top: 1040px; left: 600px;">B to is to cancel or run</div>
+    <div style="top: 1060px; left: 600px;">oh wait no there's no running in this one</div>
+
+    <div style="color: #5048f8; top: 1000px; left: 360px;">i'm so tired</div>
+    <div style="color: #5048f8; top: 1080px; left: 360px;">this shift can't end soon enough</div>
+
+    <div style="top: 1260px; left: 200px;">this is the exit down here</div>
+
+    <div style="top: 2000px; left: 400px;">so this is the starting town</div>
+    <div style="top: 2020px; left: 400px;">there's a couple of houses in the south and people to talk to,</div>
+    <div style="top: 2040px; left: 400px;">but there's nothing to do there, just ignore them</div>
+    <div style="top: 2060px; left: 400px;">you're gonna want to go straight to the lab^^</div>
+
+    <div style="color: #38b818; top: 880px; left: 2750px;">oh hey</div>
+    <div style="color: #38b818; top: 900px; left: 2750px;">i'm just taking a little break</div>
+
+    <div style="color: #38b818; top: 1040px; left: 2700px;">hey... i don't mean to be rude but,</div>
+    <div style="color: #38b818; top: 1060px; left: 2700px;">what are you doing here?</div>
+    <div style="color: #38b818; top: 1100px; left: 2700px;">this place is technically employee-only</div>
+    <div style="color: #38b818; top: 1120px; left: 2700px;">i mean, not that i mind</div>
+
+    <img id="mom" style="top: 1050px; left: 460px;" src="mom-facing-left.png" />
+    <img id="npc" style="top: 1000px; left: 2864px;" src="npc.png" />
+
+    <img id="protag" src="player-facing-down.png" />
+  </div>
+
+<script>
+  const roomElm = document.getElementById("room");
+  const playerElm = document.getElementById("protag");
+  const momElm = document.getElementById("mom");
+  const titleElm = document.getElementById("walkthrough-title");
+
+
+  let player = {x: 0, y: 0};
+
+  let last_tick = Date.now();
+  let delta_time = 0;
+  let tick_num = 0;
+  function tick() {
+
+    delta_time= Date.now() - last_tick;
+    last_tick = Date.now();
+    tick_num++;
+
+
+    updatePlayer(playerElm);
+    updateMom(momElm);
+
+
+    window.requestAnimationFrame(tick);
+  }
+
+
+  const gameScale = 3;
+  const tileSize = 16 * gameScale;
+  // function loadRoom(room) {
+
+  //   if (room == "bedroom") {
+  //     roomElm.style.backgroundImage = "bedroom.png";
+
+  //     let width = 128 * gameScale;
+  //     let height = 96 * gameScale;
+
+  //     roomElm.style.width = width + "px";
+  //     roomElm.style.height = height + "px";
+  //   }
+
+  // }
+
+
+  // x and y are tile numbers 
+  function placePlayer(x, y) {
+    playerElm.style.top = (y) + "px";
+    playerElm.style.left = (x) + "px";
+
+  }
+
+  let isMoving = false;
+  function walkPlayerRight() {
+
+    if (isMoving) {
+      // don't respond if we're in the middle of moving
+      return;
+    }
+
+  }
+
+  function updateMom(momElm) {
+    if ((Date.now() % 2000) > 1000) {
+      momElm.src = "mom-facing-left.png";
+    } else {
+      momElm.src = "mom-walking-left.png";
+    }
+
+  }
+
+  let playerSpeed = .1;
+  let playerKeyVelocity = {x : 0, y: 0};
+  let clickMoving = false;
+  function updatePlayer(playerElm) {
+    let velocity = {x : 0, y: 0};
+
+    // determine velocity in the current frame
+    // (keyboard-moving takes priority over click-moving)
+    if (moveKeyPressed) {
+	clickMoving = false;
+
+
+        velocity.x = playerSpeed * delta_time * playerKeyVelocity.x;
+        velocity.y = playerSpeed * delta_time * playerKeyVelocity.y;
+
+    }
+
+    else if (clickMoving) {
+
+      if (target != null) {
+        if (Math.abs(target.x - player.x) > 10) {
+          velocity.x = playerSpeed * delta_time * (target.x < player.x ? -1 : 1);
+        } else {
+          velocity.x = 0;
+        }
+
+        if (Math.abs(target.y - player.y) > 10) {
+          velocity.y = playerSpeed * delta_time * (target.y < player.y ? -1 : 1);
+        } else {
+          velocity.y = 0;
+        }
+
+	      if (velocity.x == 0 && velocity.y == 0) {
+	        clickMoving = false;
+        }
+      }
+    }
+
+
+    // move player on screen
+    player.x = player.x + velocity.x;
+    player.y = player.y + velocity.y
+
+    playerElm.style.left= `${player.x}px`;
+    playerElm.style.top= `${player.y}px`;
+
+    // animate
+    // we're standing still
+    if (Math.abs(velocity.x) + Math.abs(velocity.y) < 0.01) {
+      playerElm.src = "player-facing-down.png";
+
+      
+    // moving more vertical than horizontal
+    } else if (Math.abs(velocity.y) > Math.abs(velocity.x)) {
+      if (velocity.y > 0) {
+
+        // console.log(Date.now());
+        if ((Date.now() % 300) > 150) {
+          playerElm.src = "player-walking-down.png";
+        } else {
+          playerElm.src = "player-facing-down.png";
+        }
+        playerElm.style.transform = "translate(-50%, -50%)";
+      } else { // velocity.y < 0
+        if ((Date.now() % 300) > 150) {
+          playerElm.src = "player-walking-up.png";
+        } else {
+          playerElm.src = "player-facing-up.png";
+        }
+        playerElm.style.transform = "translate(-50%, -50%)";
+      }
+
+    }
+
+
+    // moving more horizontal than vertical
+    else {
+
+      if (velocity.x > 0) {
+
+        // animate
+        if ((Date.now() % 300) > 150) {
+          playerElm.src = "player-walking-left.png";
+        } else {
+          playerElm.src = "player-facing-left.png";
+        }
+        playerElm.style.transform = "translate(-50%, -50%) scaleX(-1)";
+      } else { // velocity.x < 0
+        if ((Date.now() % 300) > 150) {
+          playerElm.src = "player-walking-left.png";
+        } else {
+          playerElm.src = "player-facing-left.png";
+        }
+        playerElm.style.transform = "translate(-50%, -50%)";
+      }
+    }
+
+
+  }
+
+
+  function randSound() {
+    return sounds[Math.floor(Math.random() * sounds.length)];
+
+  }
+
+
+  let moveKeyPressed = false;
+  function startGame() {
+
+    //load bedroom
+    //loadRoom("bedroom");
+
+    // place player
+    //placePlayer(300, 450);
+
+    // init player
+    player.x = 300;
+    player.y = 450;
+    playerElm.style.left = player.x + "px";
+    playerElm.style.top = player.y + "px";
+
+
+
+    // start input
+    window.addEventListener("mousedown", e => {
+      
+      // LEFT MOUSE BUTTON
+      if (e.button == 0) {
+	      target = {x: e.pageX, y: e.pageY};
+	      clickMoving = true;
+      }
+
+      // RIGHT MOUSE BUTTON
+      if (e.button == 2) {
+      }
+
+    });
+
+    window.addEventListener("mouseup", e => {
+
+      // LEFT MOUSE BUTTON
+      if (e.button == 0) {
+      }
+
+      if (e.button == 2) {
+      }
+
+    });
+
+    window.addEventListener("mousemove", e => {
+    });
+
+    window.addEventListener("keyup", e => {
+      moveKeyPressed = false;
+    });
+    window.addEventListener("keydown", e => {
+	switch(e.code) {
+	  case "KeyS":
+    	  case "ArrowDown":
+	    moveKeyPressed = true;
+	    playerKeyVelocity = {x: 0, y: 1};
+    	    break;
+    	  case "KeyW":
+    	  case "ArrowUp":
+	    moveKeyPressed = true;
+	    playerKeyVelocity = {x: 0, y: -1};
+    	    break;
+    	  case "KeyA":
+    	  case "ArrowLeft":
+	    moveKeyPressed = true;
+	    playerKeyVelocity = {x: -1, y: 0};
+    	    break;
+    	  case "KeyD":
+    	  case "ArrowRight":
+	    moveKeyPressed = true;
+	    playerKeyVelocity = {x: 1, y: 0};
+    	    break;
+	}
+
+    });
+
+    // disable context menu on right click
+    window.addEventListener("contextmenu", e => e.preventDefault());
+
+    window.addEventListener("dragend", e => {
+
+    });
+
+
+
+
+    window.requestAnimationFrame(tick);
+  }
+  
+
+
+  startGame();
+
+</script>
+</body>
+
+
+</html>
