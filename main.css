@@ -7,20 +7,27 @@ body {
   user-select: none !important;
   color: white;
   background: black;
+  position: absolute;
 }
 
 
 #game {
+  /* 
   overscroll-behavior-y: none;
   overscroll-behavior-x: none;
+  */ 
   position: absolute;
   overflow: hidden;
 
   left: 0;
   top: 0;
+  right: 0;
+  bottom: 0;
+
 
   width: 3000px;
-  height: 3000px;
+  height: 700px;
+
 
   background: black;
 

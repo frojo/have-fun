@@ -18,6 +18,7 @@
     <div id="room"></div>
     <div id="living-room"></div>
 
+
     <img id="protag" src="player-facing-down.png" />
   </div>
 
@@ -26,9 +27,16 @@
   const playerElm = document.getElementById("protag");
   const momElm = document.getElementById("mom");
   const titleElm = document.getElementById("walkthrough-title");
+  const gameElm = document.getElementById("game");
 
 
-  let player = {x: 0, y: 0};
+  let player = {
+      x: 0, 
+      y: 0,
+      dir: "down"
+    };
+  let orbImage;
+  let orbs = [];
 
   let last_tick = Date.now();
   let delta_time = 0;
@@ -41,6 +49,10 @@
 
 
     updatePlayer(playerElm);
+
+    for (orb of orbs) {
+	updateOrb(orb);
+    }
 
 
     window.requestAnimationFrame(tick);
@@ -117,14 +129,27 @@
     // animate
     // we're standing still
     if (Math.abs(velocity.x) + Math.abs(velocity.y) < 0.01) {
-      playerElm.src = "player-facing-down.png";
-
+      switch(player.dir) {
+        case "down":
+	  playerElm.src = "player-facing-down.png";
+          break;
+        case "up":
+	  playerElm.src = "player-facing-up.png";
+          break;
+        case "left":
+	  playerElm.src = "player-facing-left.png";
+          break;
+        case "right":
+	  playerElm.src = "player-facing-left.png";
+	  playerElm.style.transform = "translate(-50%, -50%) scaleX(-1)";
+          break;
+      }
       
     // moving more vertical than horizontal
     } else if (Math.abs(velocity.y) > Math.abs(velocity.x)) {
       if (velocity.y > 0) {
+	player.dir = "down";
 
-        // console.log(Date.now());
         if ((Date.now() % 300) > 150) {
           playerElm.src = "player-walking-down.png";
         } else {
@@ -132,6 +157,8 @@
         }
         playerElm.style.transform = "translate(-50%, -50%)";
       } else { // velocity.y < 0
+	player.dir = "up";
+
         if ((Date.now() % 300) > 150) {
           playerElm.src = "player-walking-up.png";
         } else {
@@ -139,14 +166,13 @@
         }
         playerElm.style.transform = "translate(-50%, -50%)";
       }
-
     }
-
 
     // moving more horizontal than vertical
     else {
 
       if (velocity.x > 0) {
+	player.dir = "right";
 
         // animate
         if ((Date.now() % 300) > 150) {
@@ -156,6 +182,8 @@
         }
         playerElm.style.transform = "translate(-50%, -50%) scaleX(-1)";
       } else { // velocity.x < 0
+	player.dir = "left";
+
         if ((Date.now() % 300) > 150) {
           playerElm.src = "player-walking-left.png";
         } else {
@@ -166,6 +194,17 @@
     }
 
 
+  }
+
+  function updateOrb(orb) {
+    orb.x += orb.vx;
+    orb.y += orb.vy;
+    updateScreenPos(orb.elm, orb.x, orb.y);
+  }
+
+  function updateScreenPos(elm, x, y) {
+    elm.style.left = x + "px";
+    elm.style.top = y + "px";
   }
 
 
@@ -184,12 +223,16 @@
     // place player
     //placePlayer(300, 450);
 
+
     // init player
-    player.x = 300;
-    player.y = 450;
+    player.x = 100;
+    player.y = 150;
     playerElm.style.left = player.x + "px";
     playerElm.style.top = player.y + "px";
 
+    // init orb "prefab"
+    orbImage = new Image(16*3, 16*3);
+    orbImage.src = "orb1.png";
 
 
     // start input
@@ -258,6 +301,43 @@
     	  case "KeyD":
     	  case "ArrowRight":
 	    pressedKeys.right = true;
+    	    break;
+    	  case "Space":
+
+	    let vx = 0;
+	    let vy = 0;
+
+	    switch(player.dir) {
+      	      case "down":
+		vy = 1;
+      	        break;
+      	      case "up":
+		vy = -1;
+      	        break;
+      	      case "left":
+		vx = -1;
+      	        break;
+      	      case "right":
+		vx = 1;
+      	        break;
+      	    }
+
+	    let orbSpeed = 6;
+	    vy *= orbSpeed;
+	    vx *= orbSpeed;
+
+	    let orb = {
+	      x: player.x,
+	      y: player.y,
+	      vx: vx,
+	      vy: vy,
+	      elm: orbImage.cloneNode(true)
+	    }
+
+	    gameElm.appendChild(orb.elm);
+	    orbs.push(orb);
+
+	    
     	    break;
 	}
 
