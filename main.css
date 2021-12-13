@@ -25,11 +25,13 @@ body {
   bottom: 0;
 
 
-  width: 3000px;
-  height: 700px;
+  width: 1400px;
+  height: 750px;
 
 
   background: black;
+
+  background-size: cover;
 
   /*
   background-image: url("bedroom.png");
@@ -44,7 +46,7 @@ body {
   */
 }
 
-#walkthrough-title {
+.big-text {
 
   font-size: 72px;
   top: 100px;
