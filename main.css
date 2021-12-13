@@ -131,7 +131,7 @@ body {
 
   border-radius: 50%;
 
-  filter: drop-shadow(0px 0px 10px rgba(255, 255, 0, 0.7));
+  filter: drop-shadow(0px 0px 10px rgba(255, 255, 0, 0.9));
 
   /* the sprite i use is just slightly offcenter */
   transform: translate(0px, 0px);

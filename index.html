@@ -38,6 +38,43 @@
   let orbImage;
   let orbs = [];
 
+  class Orb {
+      kOrbSpeed = 6;
+
+
+      // the html element (this is technically the shadow)
+      $el = null;
+
+      // position variables;
+      x = 0;
+      y = 0;
+      vx = 0;
+      vy = 0;
+
+      constructor() {
+	this.$el = orbImage.cloneNode(true);
+	this.$el.className = "orb";
+	gameElm.appendChild(this.$el);
+      };
+
+      update() {
+	this.x += this.vx * this.kOrbSpeed;
+    	this.y += this.vy * this.kOrbSpeed;
+    	updateScreenPos(this.$el, this.x, this.y);
+
+    	if ((Date.now() % 300) > 150) {
+    	  this.$el.src = "orb1.png";
+    	} else {
+    	  this.$el.src = "orb2.png";
+    	}
+
+      }
+
+
+  }
+
+
+
   let last_tick = Date.now();
   let delta_time = 0;
   let tick_num = 0;
@@ -51,7 +88,7 @@
     updatePlayer(playerElm);
 
     for (orb of orbs) {
-	updateOrb(orb);
+	orb.update()
     }
 
 
@@ -61,35 +98,12 @@
 
   const gameScale = 3;
   const tileSize = 16 * gameScale;
-  // function loadRoom(room) {
-
-  //   if (room == "bedroom") {
-  //     roomElm.style.backgroundImage = "bedroom.png";
-
-  //     let width = 128 * gameScale;
-  //     let height = 96 * gameScale;
-
-  //     roomElm.style.width = width + "px";
-  //     roomElm.style.height = height + "px";
-  //   }
-
-  // }
 
 
   // x and y are tile numbers 
   function placePlayer(x, y) {
     playerElm.style.top = (y) + "px";
     playerElm.style.left = (x) + "px";
-
-  }
-
-  let isMoving = false;
-  function walkPlayerRight() {
-
-    if (isMoving) {
-      // don't respond if we're in the middle of moving
-      return;
-    }
 
   }
 
@@ -196,11 +210,6 @@
 
   }
 
-  function updateOrb(orb) {
-    orb.x += orb.vx;
-    orb.y += orb.vy;
-    updateScreenPos(orb.elm, orb.x, orb.y);
-  }
 
   function updateScreenPos(elm, x, y) {
     elm.style.left = x + "px";
@@ -321,24 +330,15 @@
 		vx = 1;
       	        break;
       	    }
-
-	    let orbSpeed = 6;
-	    vy *= orbSpeed;
-	    vx *= orbSpeed;
-	    
-	    let elm = orbImage.cloneNode(true);
-	    elm.className = "orb";
 	    
 
-	    let orb = {
-	      x: player.x,
-	      y: player.y,
-	      vx: vx,
-	      vy: vy,
-	      elm: elm
-	    }
+	    let orb = new Orb();
 
-	    gameElm.appendChild(orb.elm);
+	    orb.x = player.x;
+	    orb.y = player.y;
+	    orb.vx = vx;
+	    orb.vy = vy;
+
 	    orbs.push(orb);
 
 	    
