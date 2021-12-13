@@ -325,13 +325,17 @@
 	    let orbSpeed = 6;
 	    vy *= orbSpeed;
 	    vx *= orbSpeed;
+	    
+	    let elm = orbImage.cloneNode(true);
+	    elm.className = "orb";
+	    
 
 	    let orb = {
 	      x: player.x,
 	      y: player.y,
 	      vx: vx,
 	      vy: vy,
-	      elm: orbImage.cloneNode(true)
+	      elm: elm
 	    }
 
 	    gameElm.appendChild(orb.elm);
