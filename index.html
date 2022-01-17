@@ -4,7 +4,7 @@
 
 <head>
 
-<title>I MADE A FUN GAME</title>
+<title>boom boom boom boom boom boom boom boom boom boom boom boom boom boom boom boom boom</title>
 
 
 <link rel="stylesheet" type="text/css" href="./main.css" />
@@ -15,12 +15,66 @@
 <body>
   <div id="game">
     <div class="big-text"></div>
-
-
     <img id="protag" src="player-facing-down.png" />
   </div>
 
 <script>
+
+
+  let t = 0;
+  let ws = new WebSocket(`ws://localhost:8069/`);
+
+ 
+  ws.onerror = () => {
+    ws = new WebSocket("ws://localhost:9898/");
+  };
+
+  ws.onopen = function () {
+    console.log("WebSocket Client Connected");
+  
+    requestClockSync();
+  };
+  
+  ws.onmessage = function (e) {
+    let packet = JSON.parse(e.data);
+
+    const type = packet.type;
+    const data = packet.data;
+
+    if (type == "pong") {
+      clockSync(data);
+    }
+    //console.log("message recieved!");
+    console.log(packet);
+    //processUpdate(packet);
+  };
+
+  // hahahaha i have no idea wtf is happening
+  // thank you max
+  function clockSync(pingData) {
+    console.log("clock sync!");
+    let ping_ms = Date.now() - pingData.pingtime;
+    t = pingData.tick + ping_ms / (16*2);
+    // todo: lastUpdated should be updatd here
+  }
+
+  function requestClockSync() {
+    if (ws.readyState != ws.OPEN) {
+	return;
+    }
+
+    let pingPacket = {
+      type: "ping",
+      data: {
+	pingtime: Date.now(),
+	tick: "tickckckckc",
+      }
+    }
+    ws.send(JSON.stringify(pingPacket));
+  }
+
+
+
   const playerElm = document.getElementById("protag");
   const gameElm = document.getElementById("game");
   const bigTextElm = document.getElementsByClassName("big-text")[0];

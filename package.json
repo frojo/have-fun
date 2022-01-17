@@ -1,0 +1,19 @@
+{
+  "name": "boomboom",
+  "version": "1.0.0",
+  "description": "boomboo",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/frojo/have-fun.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/frojo/have-fun/issues"
+  },
+  "homepage": "https://github.com/frojo/have-fun#readme"
+}

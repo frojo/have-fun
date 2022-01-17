@@ -1,0 +1,545 @@
+<!doctype html>
+
+<html>
+
+<head>
+
+<title>I MADE A FUN GAME</title>
+
+
+<link rel="stylesheet" type="text/css" href="./main.css" />
+
+
+</head>
+
+<body>
+  <div id="game">
+    <div class="big-text"></div>
+
+
+    <img id="protag" src="player-facing-down.png" />
+  </div>
+
+<script>
+  const playerElm = document.getElementById("protag");
+  const gameElm = document.getElementById("game");
+  const bigTextElm = document.getElementsByClassName("big-text")[0];
+
+  let game = {
+      x: 0,
+      y: 0
+  }
+
+  const bgMusic = new Audio("barnutz.mp3");
+  bgMusic.loop = true;
+  let musicStarted = false;
+
+  let player = {
+      x: 0, 
+      y: 0,
+      dir: "down"
+    };
+  let orbImage;
+  let orbs = [];
+
+  let foolImage;
+  let fools = [];
+
+  class Orb {
+      kOrbSpeed = 6;
+
+      removed = false;
+
+
+      // the html element (this is technically the shadow)
+      $el = null;
+
+      // position variables;
+      x = 0;
+      y = 0;
+      vx = 0;
+      vy = 0;
+
+      // animation properties
+      facingRight = false;
+
+      constructor() {
+	this.$el = orbImage.cloneNode(true);
+	this.$el.className = "orb";
+	gameElm.appendChild(this.$el);
+      };
+
+      update() {
+
+	if (this.removed) {
+	    return;
+
+	  }
+	
+	// check for overlap with any of the fools
+	let orbRect = this.$el.getBoundingClientRect();
+
+	for (fool of fools) {
+	  let foolRect = fool.$el.getBoundingClientRect();
+
+
+	  // https://stackoverflow.com/questions/12066870/how-to-check-if-an-element-is-overlapping-other-elements
+
+	  let overlap = !(foolRect.right < orbRect.left ||
+              foolRect.left > orbRect.right ||
+              foolRect.bottom < orbRect.top ||
+              foolRect.top > orbRect.bottom)
+
+	  if (overlap) {
+	    //this.$el.parent.removeChild($this.el);
+
+	    this.removed = true;
+	    this.$el.remove();
+	    fool.$el.remove();
+
+	    startScreenShake();
+	    startBGFlash();
+
+	    let text = bigTextElm.innerHTML;
+	    bigTextElm.innerHTML = text + " boom";
+	    return;
+	  }
+    	}
+
+
+	this.x += this.vx * this.kOrbSpeed;
+    	this.y += this.vy * this.kOrbSpeed;
+    	updateScreenPos(this.$el, this.x, this.y);
+
+    	if ((Date.now() % 300) > 150) {
+    	  this.$el.src = "orb1.png";
+    	} else {
+    	  this.$el.src = "orb2.png";
+    	}
+
+      }
+
+
+  }
+
+  class Fool {
+      kFoolSpeed = 1;
+
+
+      // the html element (this is technically the shadow)
+      $el = null;
+
+      // position variables;
+      x = 0;
+      y = 0;
+      vx = 0;
+      vy = 0;
+
+      constructor() {
+	this.$el = foolImage.cloneNode(true);
+	this.$el.className = "fool";
+	gameElm.appendChild(this.$el);
+      };
+
+      update() {
+	this.x += this.vx * this.kFoolSpeed;
+    	this.y += this.vy * this.kFoolSpeed;
+    	updateScreenPos(this.$el, this.x, this.y);
+
+    	if ((Date.now() % 300) > 150) {
+    	  this.$el.src = "tonberry1.png";
+    	} else {
+    	  this.$el.src = "tonberry2.png";
+    	}
+
+	if (this.vx > 0) {
+	  this.$el.style.transform = "scaleX(-1)";
+	} else {
+	  this.$el.style.transform = "";
+	}
+      }
+
+
+  }
+
+
+
+  let last_tick = Date.now();
+  let delta_time = 0;
+  let tick_num = 0;
+  function tick() {
+
+    delta_time= Date.now() - last_tick;
+    last_tick = Date.now();
+    tick_num++;
+
+
+    updatePlayer(playerElm);
+
+    for (orb of orbs) {
+      orb.update()
+    }
+
+    for (fool of fools) {
+      fool.update();
+    }
+
+    updateScreenShake();
+    updateBGFlash();
+
+
+    window.requestAnimationFrame(tick);
+  }
+
+
+  const gameScale = 3;
+  const tileSize = 16 * gameScale;
+
+
+  // x and y are tile numbers 
+  function placePlayer(x, y) {
+    playerElm.style.top = (y) + "px";
+    playerElm.style.left = (x) + "px";
+
+  }
+
+
+  let playerSpeed = .1;
+  let playerKeyVelocity = {x : 0, y: 0};
+  let pressedKeys = {
+      up: false,
+      down: false,
+      left: false,
+      right: false
+  }
+  function updatePlayer(playerElm) {
+    let velocity = {x : 0, y: 0};
+
+    // grab input
+    if (pressedKeys.right) {
+        velocity.x += playerSpeed * delta_time;
+    }
+    if (pressedKeys.left) {
+        velocity.x -= playerSpeed * delta_time;
+    }
+    if (pressedKeys.up) {
+        velocity.y -= playerSpeed * delta_time;
+    }
+    if (pressedKeys.down) {
+        velocity.y += playerSpeed * delta_time;
+    }
+
+    // move player on screen
+    player.x = player.x + velocity.x;
+    player.y = player.y + velocity.y
+
+    playerElm.style.left= `${player.x}px`;
+    playerElm.style.top= `${player.y}px`;
+
+    // animate
+    // we're standing still
+    if (Math.abs(velocity.x) + Math.abs(velocity.y) < 0.01) {
+      switch(player.dir) {
+        case "down":
+	  playerElm.src = "player-facing-down.png";
+          break;
+        case "up":
+	  playerElm.src = "player-facing-up.png";
+          break;
+        case "left":
+	  playerElm.src = "player-facing-left.png";
+          break;
+        case "right":
+	  playerElm.src = "player-facing-left.png";
+	  playerElm.style.transform = "translate(-50%, -50%) scaleX(-1)";
+          break;
+      }
+      
+    // moving more vertical than horizontal
+    } else if (Math.abs(velocity.y) > Math.abs(velocity.x)) {
+      if (velocity.y > 0) {
+	player.dir = "down";
+
+        if ((Date.now() % 300) > 150) {
+          playerElm.src = "player-walking-down.png";
+        } else {
+          playerElm.src = "player-facing-down.png";
+        }
+        playerElm.style.transform = "translate(-50%, -50%)";
+      } else { // velocity.y < 0
+	player.dir = "up";
+
+        if ((Date.now() % 300) > 150) {
+          playerElm.src = "player-walking-up.png";
+        } else {
+          playerElm.src = "player-facing-up.png";
+        }
+        playerElm.style.transform = "translate(-50%, -50%)";
+      }
+    }
+
+    // moving more horizontal than vertical
+    else {
+
+      if (velocity.x > 0) {
+	player.dir = "right";
+
+        // animate
+        if ((Date.now() % 300) > 150) {
+          playerElm.src = "player-walking-left.png";
+        } else {
+          playerElm.src = "player-facing-left.png";
+        }
+        playerElm.style.transform = "translate(-50%, -50%) scaleX(-1)";
+      } else { // velocity.x < 0
+	player.dir = "left";
+
+        if ((Date.now() % 300) > 150) {
+          playerElm.src = "player-walking-left.png";
+        } else {
+          playerElm.src = "player-facing-left.png";
+        }
+        playerElm.style.transform = "translate(-50%, -50%)";
+      }
+    }
+
+
+  }
+
+
+  function updateScreenPos(elm, x, y) {
+    elm.style.left = x + "px";
+    elm.style.top = y + "px";
+  }
+
+
+  function randSound() {
+    return sounds[Math.floor(Math.random() * sounds.length)];
+
+  }
+
+  let flashFramesLeft = 0;
+
+  let flashDuration = 3;
+  function startBGFlash() {
+    flashFramesLeft = 10;
+  }
+
+  function updateBGFlash() {
+    if (flashFramesLeft <= 0) {
+	gameElm.style.backgroundImage = "";
+	return;
+
+	console.log("listen to me!");
+	gameElm.style.background = "none";
+    }
+
+    console.log("flashing!");
+
+    gameElm.style.backgroundImage = "url(leaves-bg.png)";
+
+    flashFramesLeft -= 1;
+  }
+
+
+
+  let shakeFramesLeft = 0;
+
+  let shakeDuration = 10;
+  let shakeSeverity = 10;
+  function startScreenShake() {
+    shakeFramesLeft = 10;
+  }
+
+  function updateScreenShake() {
+    if (shakeFramesLeft <= 0) {
+	return;
+    }
+
+    let xOffset = Math.random() * shakeSeverity - (shakeSeverity / 2);
+    let yOffset = Math.random() * shakeSeverity - (shakeSeverity / 2);
+
+    game.x = xOffset;
+    game.y = yOffset;
+    updateScreenPos(gameElm, game.x, game.y);
+
+    shakeFramesLeft -= 1;
+  }
+
+
+
+  let moveKeyPressed = false;
+  function startGame() {
+
+    // init orb image "prefab"
+    orbImage = new Image(16*3, 16*3);
+    orbImage.src = "orb1.png";
+
+    // init enemy image "prefab"
+    foolImage = new Image(26*2, 27*2);
+    foolImage.src = "tonberry1.png";
+
+    // init fools
+    for (let i = 0; i < 10; i++) {
+      let fool = new Fool();
+
+      let screenWidth = 1400;
+
+      fool.x = Math.random() * screenWidth;
+      fool.y = Math.random() * 700;
+
+      fool.vx = 0;
+      if (fool.x > screenWidth / 2)  {
+	fool.vx = -1;
+      } else {
+	fool.vx = 1;
+      }
+
+      fools.push(fool);
+
+    }
+
+    //load bedroom
+    //loadRoom("bedroom");
+
+    // place player
+    //placePlayer(300, 450);
+
+
+    // init player
+    player.x = 600;
+    player.y = 350;
+    playerElm.style.left = player.x + "px";
+    playerElm.style.top = player.y + "px";
+
+
+
+    // start input
+    window.addEventListener("mousedown", e => {
+      
+      // LEFT MOUSE BUTTON
+      if (e.button == 0) {
+	      target = {x: e.pageX, y: e.pageY};
+      }
+
+      // RIGHT MOUSE BUTTON
+      if (e.button == 2) {
+      }
+
+    });
+
+    window.addEventListener("mouseup", e => {
+
+      // LEFT MOUSE BUTTON
+      if (e.button == 0) {
+      }
+
+      if (e.button == 2) {
+      }
+
+    });
+
+    window.addEventListener("mousemove", e => {
+    });
+
+    window.addEventListener("keyup", e => {
+	switch(e.code) {
+	  case "KeyS":
+    	  case "ArrowDown":
+	    pressedKeys.down = false;
+    	    break;
+    	  case "KeyW":
+    	  case "ArrowUp":
+	    pressedKeys.up = false;
+    	    break;
+    	  case "KeyA":
+    	  case "ArrowLeft":
+	    pressedKeys.left = false;
+    	    break;
+    	  case "KeyD":
+    	  case "ArrowRight":
+	    pressedKeys.right = false;
+    	    break;
+	}
+    });
+    window.addEventListener("keydown", e => {
+
+	if (!musicStarted) {
+	  bgMusic.play();
+	}
+
+	switch(e.code) {
+	  case "KeyS":
+    	  case "ArrowDown":
+	    pressedKeys.down = true;
+    	    break;
+    	  case "KeyW":
+    	  case "ArrowUp":
+	    pressedKeys.up = true;
+    	    break;
+    	  case "KeyA":
+    	  case "ArrowLeft":
+	    pressedKeys.left = true;
+    	    break;
+    	  case "KeyD":
+    	  case "ArrowRight":
+	    pressedKeys.right = true;
+    	    break;
+    	  case "Space":
+
+	    let vx = 0;
+	    let vy = 0;
+
+	    switch(player.dir) {
+      	      case "down":
+		vy = 1;
+      	        break;
+      	      case "up":
+		vy = -1;
+      	        break;
+      	      case "left":
+		vx = -1;
+      	        break;
+      	      case "right":
+		vx = 1;
+      	        break;
+      	    }
+	    
+
+	    let orb = new Orb();
+
+	    orb.x = player.x;
+	    orb.y = player.y;
+	    orb.vx = vx;
+	    orb.vy = vy;
+
+	    orbs.push(orb);
+
+	    
+    	    break;
+	}
+
+    });
+
+    // disable context menu on right click
+    window.addEventListener("contextmenu", e => e.preventDefault());
+
+    window.addEventListener("dragend", e => {
+
+    });
+
+
+
+
+    window.requestAnimationFrame(tick);
+  }
+  
+
+
+  startGame();
+
+</script>
+</body>
+
+
+</html>

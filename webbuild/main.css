@@ -1,0 +1,177 @@
+body {
+  background: black;
+}
+
+* {
+  font-size: 18px;
+  user-select: none !important;
+  color: white;
+  background: black;
+  position: absolute;
+}
+
+
+#game {
+  /* 
+  overscroll-behavior-y: none;
+  overscroll-behavior-x: none;
+  */ 
+  position: absolute;
+  overflow: hidden;
+
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+
+
+  width: 1400px;
+  height: 750px;
+
+
+  background: black;
+
+  background-size: cover;
+
+  /*
+  background-image: url("bedroom.png");
+  background-position: -7000px -650px;
+  */
+
+  cursor: default;
+
+  /*
+  display: flex;
+  justify-content: center;
+  */
+}
+
+.big-text {
+
+  font-size: 72px;
+  top: 100px;
+  left: 100px;
+
+}
+
+#room {
+  background-image: url("bedroom.png");
+  background-repeat: no-repeat;
+  background-size: cover;
+  image-rendering: pixelated;
+  
+  position: absolute;
+
+  top: 300px;
+  left: 100px;
+
+  width: 384px;
+  height: 288px;
+
+}
+
+#living-room {
+  background-image: url("living-room.png");
+  background-repeat: no-repeat;
+  background-size: cover;
+  image-rendering: pixelated;
+  position: absolute;
+
+
+  top: 900px;
+  left: 100px;
+
+  width: 480px;
+  height: 384px;
+
+}
+
+#town {
+  background-image: url("town.png");
+  background-repeat: no-repeat;
+  background-size: cover;
+  image-rendering: pixelated;
+  position: absolute;
+
+
+  top: 1600px;
+  left: 100px;
+
+  width: 1296px;
+  height: 1056px;
+
+}
+
+#house1 {
+  background-image: url("house1.png");
+  background-repeat: no-repeat;
+  background-size: cover;
+  image-rendering: pixelated;
+  position: absolute;
+
+
+  top: 800px;
+  left: 2600px;
+
+  width: 384px;
+  height: 384px;
+
+}
+
+#protag {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  image-rendering: pixelated;
+  background: none;
+
+  transform: translate(-50%, -50%);
+
+}
+
+.orb {
+
+  border-radius: 50%;
+
+  filter: drop-shadow(0px 0px 10px rgba(255, 255, 0, 0.9));
+
+  /* the sprite i use is just slightly offcenter */
+  transform: translate(0px, 0px);
+}
+
+
+
+#selection-rect {
+  position: absolute;
+
+  left: 0px;
+  top: 0px;
+  width: 0px;
+  height: 0px;
+  display: none;
+
+
+  border-style: dashed;
+  border-color: aquamarine;
+  border-width: 2px;
+
+  pointer-events: none;
+
+
+}
+
+
+div {
+  position: absolute;
+
+}
+img {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  image-rendering: pixelated;
+  background: none;
+
+  transform: translate(-50%, -50%);
+
+}
