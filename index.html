@@ -15,7 +15,6 @@
 <body>
   <div id="game">
     <div class="big-text"></div>
-    <img id="protag" src="player-facing-down.png" />
   </div>
 
 <script type="module">
@@ -23,22 +22,11 @@
 
   // thank you max
   const uuid = uuidv4().slice(0, 8);
+  
+  let me;
 
   // the players
   let agents = []
-
-  // init me
-  const meElm = document.getElementById("protag");
-  let me = {
-    uuid: uuid,
-    x: 0, 
-    y: 0,
-    dir: "down"
-  };
-  me.x = 300 + Math.random() * 600;
-  me.y = 200 + Math.random() * 300;
-  meElm.style.left = me.x + "px";
-  meElm.style.top = me.y + "px";
 
 
   let t = 0;
@@ -68,26 +56,41 @@
     }
   };
 
+  // the agentMap is a map of agents i get from the server
+  // <agents> is a local array of Agent instances that i use for rendering
   function processAgents(agentMap) {
-    let new_agents = agentMap
+    let new_agents = agentMap;
 
 
-    // remove agents that the server doesn't recognize
-    // TODO: delete local agent render obj
+
+    // remove agents how aren't in the map
+    agents.forEach((a) => {
+      if (!new_agents[a.uuid]) {
+        // remove agent rendering objs that the server doesn't recognize
+        a.removeElm();
+        // i think this tells the JS GC to gurk it
+        a = null;
+      }
+    });
     agents = agents.filter((a) => new_agents[a.uuid]);
 
-    // for each new agent, get new target from server
-    // and create local render object
+    // update local agents with info from server
+    // (also prep new_agents)
     agents.forEach((a) => {
-      // TODO: create local render obj
-
-      // TODO get new target or hatever
+      // TODO update local agents with target or whatever
+    
+      // (also clean new_agents to prep for adding new agents)
       delete new_agents[a.uuid];
     });
 
 
     // if an agent wasn't seen before, add it
-    agents = [...agents, ...Object.values(new_agents)];
+    // (at this point new_agents is only new agents)
+    for (const a of Object.values(new_agents)) {
+      const agent = new Agent(a.uuid, a.x, a.y);
+      agents.push(agent);
+
+    }
     console.log("agents...");
     console.log(agents);
   }
@@ -141,13 +144,58 @@
 
   const bgMusic = new Audio("barnutz.mp3");
   bgMusic.loop = true;
-  let musicStarted = false;
+  
+  // DEBUG: flip this to false for the real thing
+  let musicStarted = true;
 
   let orbImage;
   let orbs = [];
 
   let foolImage;
   let fools = [];
+
+
+  let agentPrefab;
+
+
+  class Agent {
+      uuid;
+
+
+      // position variables;
+      x = 0;
+      y = 0;
+      vx = 0;
+      vy = 0;
+
+      dir = "down";
+
+      // the html element (this is technically the shadow)
+      $el = null;
+      constructor(uuid, x, y, dir) {
+        this.uuid = uuid;
+  
+        this.$el = new Image(26*2, 27*2);
+        this.$el.src = "player-facing-down.png";
+	      this.$el.className = "player";
+	      gameElm.appendChild(this.$el);
+
+        this.x = x;
+        this.y = y;
+        this.dir = dir;
+      };
+
+      update() {
+        updateScreenPos(this.$el, this.x, this.y);
+      }
+
+      removeElm() {
+        console.log("removing agent!");
+        console.log(this.$el);
+	      this.$el.parentNode.removeChild(this.$el);
+      }
+
+  }
 
   class Orb {
       kOrbSpeed = 6;
@@ -168,9 +216,9 @@
       facingRight = false;
 
       constructor() {
-	this.$el = orbImage.cloneNode(true);
-	this.$el.className = "orb";
-	gameElm.appendChild(this.$el);
+	      this.$el = orbImage.cloneNode(true);
+	      this.$el.className = "orb";
+	      gameElm.appendChild(this.$el);
       };
 
       update() {
@@ -270,9 +318,9 @@
   function renderAgent(agent) {
     if (agent.uuid == me.uuid) {
       agent = me
-      console.log("it me");
     }
-    console.log(agent.uuid + " is rendered");
+
+    agent.update();
 
   }
 
@@ -286,7 +334,6 @@
     last_tick = Date.now();
     tick_num++;
 
-    updatePlayer(meElm);
 
     agents.forEach(renderAgent);
 
@@ -311,14 +358,6 @@
 
   const gameScale = 3;
   const tileSize = 16 * gameScale;
-
-
-  // x and y are tile numbers 
-  function placePlayer(x, y) {
-    meElm.style.top = (y) + "px";
-    meElm.style.left = (x) + "px";
-
-  }
 
 
   let meSpeed = .1;
@@ -350,8 +389,8 @@
     me.x = me.x + velocity.x;
     me.y = me.y + velocity.y
 
-    meElm.style.left= `${me.x}px`;
-    meElm.style.top= `${me.y}px`;
+    
+    updateScreenPos(me.$el, me.x, me.y);
 
     // animate
     // we're standing still
@@ -487,6 +526,14 @@
 
   let moveKeyPressed = false;
   function startGame() {
+    // init player
+    me = new Agent(uuid, 0, 0, "down");
+    me.x = 50 + Math.random() * 300;
+    me.y = 50 + Math.random() * 200;
+
+    // agent image prefab
+    orbImage = new Image(16*3, 16*3);
+    orbImage.src = "orb1.png";
 
     // init orb image "prefab"
     orbImage = new Image(16*3, 16*3);
