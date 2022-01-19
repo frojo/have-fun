@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/frojo/have-fun/issues"
   },
-  "homepage": "https://github.com/frojo/have-fun#readme"
+  "homepage": "https://github.com/frojo/have-fun#readme",
+  "dependencies": {
+    "uuid": "^8.3.2"
+  }
 }

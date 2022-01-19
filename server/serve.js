@@ -3,9 +3,12 @@ import WebSocket, { WebSocketServer } from 'ws';
 
 let t = 0;
 
+const agentState = {};
+
 const wss = new WebSocketServer({ port: 8069 });
 
 wss.on('connection', function connection(conn) {
+  let uuid;
 
   conn.on('message', function message(m) {
 
@@ -13,30 +16,42 @@ wss.on('connection', function connection(conn) {
     
     const packet = JSON.parse(m);
     const type = packet.type;
+    const data = packet.data;
 
+    console.log("type = " + type);
     if (type == "ping") {
       const pongPacket = {
 	type: "pong",
 	data: {
-	  pingtime: packet.data.pingtime,
+	  pingtime: data.pingtime,
 	  tick: t
 	}
       }
       conn.send(JSON.stringify(pongPacket));
-
     } else if (type == "agent-update") {
+      uuid = data.uuid;
+      console.log("uuid = " + uuid);
+      agentState[uuid] = data;
+      console.log(agentState);
     }
 
     console.log('received: %s', m);
   });
 
+  conn.on('close', function close() {
+    delete agentState[uuid];
+    console.log("Client has disconnected.");
+  });
+
 });
+
+
 
 
 function sendAgentUpdate() {
   let packet = JSON.stringify({
     type: "agent-update",
-    data: "data for all agents"
+    data: agentState
   });
 
 

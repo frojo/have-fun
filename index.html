@@ -18,7 +18,27 @@
     <img id="protag" src="player-facing-down.png" />
   </div>
 
-<script>
+<script type="module">
+  import { v4 as uuidv4 } from 'https://jspm.dev/uuid';
+
+  // thank you max
+  const uuid = uuidv4().slice(0, 8);
+
+  // the players
+  let agents = []
+
+  // init me
+  const meElm = document.getElementById("protag");
+  let me = {
+    uuid: uuid,
+    x: 0, 
+    y: 0,
+    dir: "down"
+  };
+  me.x = 300 + Math.random() * 600;
+  me.y = 200 + Math.random() * 300;
+  meElm.style.left = me.x + "px";
+  meElm.style.top = me.y + "px";
 
 
   let t = 0;
@@ -41,20 +61,56 @@
     const type = packet.type;
     const data = packet.data;
 
-    if (type == "pong") {
+    if (type == "agent-update") {
+      processAgents(data);
+    } else if (type == "pong") {
       clockSync(data);
     }
-    //console.log("message recieved!");
-    console.log(packet);
-    //processUpdate(packet);
   };
+
+  function processAgents(agentMap) {
+    let new_agents = agentMap
+
+
+    // remove agents that the server doesn't recognize
+    // TODO: delete local agent render obj
+    agents = agents.filter((a) => new_agents[a.uuid]);
+
+    // for each new agent, get new target from server
+    // and create local render object
+    agents.forEach((a) => {
+      // TODO: create local render obj
+
+      // TODO get new target or hatever
+      delete new_agents[a.uuid];
+    });
+
+
+    // if an agent wasn't seen before, add it
+    agents = [...agents, ...Object.values(new_agents)];
+    console.log("agents...");
+    console.log(agents);
+  }
+
+  function sendUpdate() {
+    if (ws.readyState != ws.OPEN) {
+      return;
+    }
+
+    let packet = {
+      type: "agent-update",
+      data: me,
+    };
+    ws.send(JSON.stringify(packet));
+
+  }
 
   // hahahaha i have no idea wtf is happening
   // thank you max
   function clockSync(pingData) {
-    console.log("clock sync!");
     let ping_ms = Date.now() - pingData.pingtime;
     t = pingData.tick + ping_ms / (16*2);
+    console.log("t = " + t);
     // todo: lastUpdated should be updatd here
   }
 
@@ -67,7 +123,7 @@
       type: "ping",
       data: {
 	pingtime: Date.now(),
-	tick: "tickckckckc",
+	tick: t,
       }
     }
     ws.send(JSON.stringify(pingPacket));
@@ -75,7 +131,6 @@
 
 
 
-  const playerElm = document.getElementById("protag");
   const gameElm = document.getElementById("game");
   const bigTextElm = document.getElementsByClassName("big-text")[0];
 
@@ -88,11 +143,6 @@
   bgMusic.loop = true;
   let musicStarted = false;
 
-  let player = {
-      x: 0, 
-      y: 0,
-      dir: "down"
-    };
   let orbImage;
   let orbs = [];
 
@@ -133,7 +183,7 @@
 	// check for overlap with any of the fools
 	let orbRect = this.$el.getBoundingClientRect();
 
-	for (fool of fools) {
+	for (const fool of fools) {
 	  let foolRect = fool.$el.getBoundingClientRect();
 
 
@@ -217,6 +267,15 @@
   }
 
 
+  function renderAgent(agent) {
+    if (agent.uuid == me.uuid) {
+      agent = me
+      console.log("it me");
+    }
+    console.log(agent.uuid + " is rendered");
+
+  }
+
 
   let last_tick = Date.now();
   let delta_time = 0;
@@ -227,20 +286,24 @@
     last_tick = Date.now();
     tick_num++;
 
+    updatePlayer(meElm);
 
-    updatePlayer(playerElm);
+    agents.forEach(renderAgent);
 
-    for (orb of orbs) {
+    for (const orb of orbs) {
       orb.update()
     }
 
-    for (fool of fools) {
+    for (const fool of fools) {
       fool.update();
     }
 
     updateScreenShake();
     updateBGFlash();
 
+    if (tick_num % 10 == 0) {
+      sendUpdate();
+    }
 
     window.requestAnimationFrame(tick);
   }
@@ -252,83 +315,83 @@
 
   // x and y are tile numbers 
   function placePlayer(x, y) {
-    playerElm.style.top = (y) + "px";
-    playerElm.style.left = (x) + "px";
+    meElm.style.top = (y) + "px";
+    meElm.style.left = (x) + "px";
 
   }
 
 
-  let playerSpeed = .1;
-  let playerKeyVelocity = {x : 0, y: 0};
+  let meSpeed = .1;
+  let meKeyVelocity = {x : 0, y: 0};
   let pressedKeys = {
       up: false,
       down: false,
       left: false,
       right: false
   }
-  function updatePlayer(playerElm) {
+  function updatePlayer(meElm) {
     let velocity = {x : 0, y: 0};
 
     // grab input
     if (pressedKeys.right) {
-        velocity.x += playerSpeed * delta_time;
+        velocity.x += meSpeed * delta_time;
     }
     if (pressedKeys.left) {
-        velocity.x -= playerSpeed * delta_time;
+        velocity.x -= meSpeed * delta_time;
     }
     if (pressedKeys.up) {
-        velocity.y -= playerSpeed * delta_time;
+        velocity.y -= meSpeed * delta_time;
     }
     if (pressedKeys.down) {
-        velocity.y += playerSpeed * delta_time;
+        velocity.y += meSpeed * delta_time;
     }
 
     // move player on screen
-    player.x = player.x + velocity.x;
-    player.y = player.y + velocity.y
+    me.x = me.x + velocity.x;
+    me.y = me.y + velocity.y
 
-    playerElm.style.left= `${player.x}px`;
-    playerElm.style.top= `${player.y}px`;
+    meElm.style.left= `${me.x}px`;
+    meElm.style.top= `${me.y}px`;
 
     // animate
     // we're standing still
     if (Math.abs(velocity.x) + Math.abs(velocity.y) < 0.01) {
-      switch(player.dir) {
+      switch(me.dir) {
         case "down":
-	  playerElm.src = "player-facing-down.png";
+	  meElm.src = "player-facing-down.png";
           break;
         case "up":
-	  playerElm.src = "player-facing-up.png";
+	  meElm.src = "player-facing-up.png";
           break;
         case "left":
-	  playerElm.src = "player-facing-left.png";
+	  meElm.src = "player-facing-left.png";
           break;
         case "right":
-	  playerElm.src = "player-facing-left.png";
-	  playerElm.style.transform = "translate(-50%, -50%) scaleX(-1)";
+	  meElm.src = "player-facing-left.png";
+	  meElm.style.transform = "translate(-50%, -50%) scaleX(-1)";
           break;
       }
       
     // moving more vertical than horizontal
     } else if (Math.abs(velocity.y) > Math.abs(velocity.x)) {
       if (velocity.y > 0) {
-	player.dir = "down";
+	me.dir = "down";
 
         if ((Date.now() % 300) > 150) {
-          playerElm.src = "player-walking-down.png";
+          meElm.src = "player-walking-down.png";
         } else {
-          playerElm.src = "player-facing-down.png";
+          meElm.src = "player-facing-down.png";
         }
-        playerElm.style.transform = "translate(-50%, -50%)";
+        meElm.style.transform = "translate(-50%, -50%)";
       } else { // velocity.y < 0
-	player.dir = "up";
+	me.dir = "up";
 
         if ((Date.now() % 300) > 150) {
-          playerElm.src = "player-walking-up.png";
+          meElm.src = "player-walking-up.png";
         } else {
-          playerElm.src = "player-facing-up.png";
+          meElm.src = "player-facing-up.png";
         }
-        playerElm.style.transform = "translate(-50%, -50%)";
+        meElm.style.transform = "translate(-50%, -50%)";
       }
     }
 
@@ -336,24 +399,24 @@
     else {
 
       if (velocity.x > 0) {
-	player.dir = "right";
+	me.dir = "right";
 
         // animate
         if ((Date.now() % 300) > 150) {
-          playerElm.src = "player-walking-left.png";
+          meElm.src = "player-walking-left.png";
         } else {
-          playerElm.src = "player-facing-left.png";
+          meElm.src = "player-facing-left.png";
         }
-        playerElm.style.transform = "translate(-50%, -50%) scaleX(-1)";
+        meElm.style.transform = "translate(-50%, -50%) scaleX(-1)";
       } else { // velocity.x < 0
-	player.dir = "left";
+	me.dir = "left";
 
         if ((Date.now() % 300) > 150) {
-          playerElm.src = "player-walking-left.png";
+          meElm.src = "player-walking-left.png";
         } else {
-          playerElm.src = "player-facing-left.png";
+          meElm.src = "player-facing-left.png";
         }
-        playerElm.style.transform = "translate(-50%, -50%)";
+        meElm.style.transform = "translate(-50%, -50%)";
       }
     }
 
@@ -453,18 +516,6 @@
 
     }
 
-    //load bedroom
-    //loadRoom("bedroom");
-
-    // place player
-    //placePlayer(300, 450);
-
-
-    // init player
-    player.x = 600;
-    player.y = 350;
-    playerElm.style.left = player.x + "px";
-    playerElm.style.top = player.y + "px";
 
 
 
@@ -473,7 +524,6 @@
       
       // LEFT MOUSE BUTTON
       if (e.button == 0) {
-	      target = {x: e.pageX, y: e.pageY};
       }
 
       // RIGHT MOUSE BUTTON
@@ -544,7 +594,7 @@
 	    let vx = 0;
 	    let vy = 0;
 
-	    switch(player.dir) {
+	    switch(me.dir) {
       	      case "down":
 		vy = 1;
       	        break;
@@ -562,8 +612,8 @@
 
 	    let orb = new Orb();
 
-	    orb.x = player.x;
-	    orb.y = player.y;
+	    orb.x = me.x;
+	    orb.y = me.y;
 	    orb.vx = vx;
 	    orb.vy = vy;
 
